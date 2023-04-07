@@ -66,3 +66,4 @@ convert_temp <- function(temp, units) {
 
 convert_temp(24, 'c')
 convert_temp(75.2, 'f')
+convert_temp(10, 'k')
