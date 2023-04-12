@@ -1,0 +1,128 @@
+Looking to start converting my most recent project from Python to R.
+
+Wish me luck.
+
+```{r}
+# imports
+library(readr)
+library(ggplot2)
+library(dplyr)
+```
+
+# Hotel Cancellation Analysis
+
+## Business Understanding
+
+Hotels are often plagued with last minutes cancellations as people's plans change, schedules conflict, or if a better price was found elsewhere. Research from Avvio.com [shows](https://www.avvio.com/2022-cancellation-rate-trends/) that revenue lost due to hotel room cancellations increased 33% from 2019 to 2022.
+
+The goal of this analysis is to use past information about a particular guest (i.e. have they cancelled in the past?), along with information about their stay and requests (i.e. room type, length of stay), to predict whether the guest is likely to cancel their reservation or not show up at all.
+
+Being able to predict whether a guest is likely to cancel would be a huge benefit to the hotel. Having an idea of potential cancellations would allow management to better plan for staffing, food budgets, and other commodities that depend on guest levels.
+
+Precision is important in this analysis as we want to minimize the number of false positives (when the model predicts that a guest will cancel but the guest does not actually cancel) to ensure a high level of customer service for guests.
+
+## The Data
+
+Importing the data and running preliminary descriptive analysis shows that there are 36,275 data entries. There are no null values in the dataset. There are a total of 19 columns including a unique identifier column `Booking_ID` and the target column `booking_status`.
+
+Dates range from July 1, 2017 to December 31, 2018. There was a discrepency in the data that had a February 29 date for the year 2018. Since 2018 was not a leap year, the dates have been adjusted to read as the 28th.
+
+The dataset features are primarily numerical with three object columns: `type_of_meal_plan`, `room_type_reserved`, `market_segment_type`.
+
+Notable missing features:
+
+-   Hotel rating/stars
+
+-   Hotel Location
+
+-   Size of hotel/number of rooms the hotel has
+
+The average hotel stay is for two adult guests with no children for a long weekend (1 week night and 2 weekend nights) booked about 3 months in advance. The average hotel room price is about \$103.
+
+```{r}
+# reading in dataset
+df = read.csv('Hotel Reservations.csv')
+```
+
+Checking out the dataset to get a feel for it:
+
+```{r}
+
+df %>% 
+  head(3)
+```
+
+statistical information on numerical features
+
+```{r}
+df %>% 
+  select(where(is.numeric)) %>% 
+  summary()
+```
+
+checking type and count of cols
+
+```{r}
+df %>% 
+  str()
+```
+
+## Feature Engineering
+
+### Checking Date Range - Adding Date Column
+
+Checking the date range for the data. There is data for February 29th for a year that does not have a leap year. To account for this, I have adjusted the date to be February 28th for any days that were incorrectly labeled.
+
+```{r}
+df %>% 
+  select(arrival_year) %>% 
+  summarise(min_year = min(arrival_year), max_year = max(arrival_year))
+
+
+```
+
+Checking to see if there are any leap year days.
+
+```{r}
+df %>% 
+  filter(arrival_month == 2) %>% 
+  select(arrival_date) %>% 
+  summarise(max_day_in_feb = max(arrival_date))
+```
+
+Let's go ahead and update the Feb 29 day for Feb 28 since where no leap years during the date range of this analysis.
+
+```{r}
+df['arrival_date'] <- replace(df['arrival_date'], 
+                              df['arrival_date'] == 29 & df['arrival_month'] ==2,
+                              28)
+```
+
+Let's check to make sure that the change took:
+
+```{r}
+df %>% 
+  filter(arrival_month == 2) %>% 
+  select(arrival_date) %>% 
+  summarise(max_day_in_feb = max(arrival_date))
+```
+
+Perfect, let's go ahead and make a new feature with the date combined to one column as well.
+
+```{r}
+# need to use df$col instead of df['col'] for this to work
+df['date'] <- as.Date(paste(df$arrival_year, 
+                            df$arrival_month, 
+                            df$arrival_date, 
+                            sep = "-"))
+
+str(df)
+```
+
+Great! Now let's check for exact min and max dates of the dataset.
+
+```{r}
+df %>% 
+  select(date) %>% 
+  summarise(min_date = min(date), max_date = max(date))
+```
