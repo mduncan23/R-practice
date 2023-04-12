@@ -126,3 +126,38 @@ df %>%
   select(date) %>% 
   summarise(min_date = min(date), max_date = max(date))
 ```
+
+### Adding new feature `total_stay`
+
+Adding feature `total_stay` to account for all weekday and week end stays together.
+
+```{r}
+df <- df %>% 
+  mutate(total_stay = no_of_week_nights+ no_of_weekend_nights)
+
+head(df, 3)
+```
+
+### Adding New Feature `total_stay_price`
+
+Adding feature `total_stay_price` to account for the total price for all days stayed.
+
+```{r}
+df <- df %>% 
+  mutate(total_stay_price = total_stay * avg_price_per_room)
+
+head(df, 3)
+```
+
+## Data Visualizations
+
+```{r}
+
+# getting counts of unique values in each col               
+sapply(df, function(x) n_distinct(x) <= 12)     
+     
+     
+
+df %>% 
+  distinct()
+```
